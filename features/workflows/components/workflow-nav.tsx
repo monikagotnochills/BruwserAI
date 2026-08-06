@@ -1,7 +1,12 @@
 "use client"
 
 import * as React from "react"
-import { MoreHorizontalIcon, PlusIcon, WorkflowIcon } from "lucide-react"
+import {
+  MoreHorizontalIcon,
+  PanelLeftIcon,
+  PlusIcon,
+  WorkflowIcon,
+} from "lucide-react"
 
 import { useWorkflows } from "@/components/workflow-provider"
 import {
@@ -42,6 +47,7 @@ function WorkflowNav() {
 function WorkflowNavExpanded() {
   const { workflows, selectedId, selectWorkflow, createWorkflow } =
     useWorkflows()
+  const { toggleSidebar } = useSidebar()
 
   return (
     <SidebarGroup>
@@ -49,6 +55,14 @@ function WorkflowNavExpanded() {
       <SidebarGroupAction title="New workflow" onClick={createWorkflow}>
         <PlusIcon />
         <span className="sr-only">New workflow</span>
+      </SidebarGroupAction>
+      <SidebarGroupAction
+        title="Collapse sidebar"
+        onClick={toggleSidebar}
+        className="right-10"
+      >
+        <PanelLeftIcon />
+        <span className="sr-only">Collapse sidebar</span>
       </SidebarGroupAction>
       <SidebarGroupContent>
         <SidebarMenu>
@@ -134,11 +148,21 @@ function WorkflowMenuItem({
 function WorkflowNavCollapsed() {
   const { workflows, selectedId, selectWorkflow, createWorkflow } =
     useWorkflows()
+  const { toggleSidebar } = useSidebar()
 
   return (
     <SidebarGroup>
       <SidebarGroupContent>
         <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              title="Expand sidebar"
+              onClick={toggleSidebar}
+            >
+              <PanelLeftIcon />
+              <span>Expand sidebar</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <Popover>
               <PopoverTrigger asChild>
