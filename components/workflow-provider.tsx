@@ -2,13 +2,13 @@
 
 import * as React from "react"
 
-export type Workflow = {
+export type LocalWorkflow = {
   id: string
   name: string
 }
 
 type WorkflowContextProps = {
-  workflows: Workflow[]
+  workflows: LocalWorkflow[]
   selectedId: string | null
   selectWorkflow: (id: string | null) => void
   createWorkflow: () => void
@@ -28,11 +28,11 @@ function useWorkflows() {
 }
 
 function WorkflowProvider({ children }: { children: React.ReactNode }) {
-  const [workflows, setWorkflows] = React.useState<Workflow[]>([])
+  const [workflows, setWorkflows] = React.useState<LocalWorkflow[]>([])
   const [selectedId, setSelectedId] = React.useState<string | null>(null)
 
   const createWorkflow = React.useCallback(() => {
-    const workflow: Workflow = {
+    const workflow: LocalWorkflow = {
       id: crypto.randomUUID(),
       name: "Untitled workflow",
     }

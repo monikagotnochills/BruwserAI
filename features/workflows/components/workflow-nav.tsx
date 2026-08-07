@@ -1,20 +1,11 @@
 "use client"
 
-import * as React from "react"
-import {
-  MoreHorizontalIcon,
-  PanelLeftIcon,
-  PlusIcon,
-  WorkflowIcon,
-} from "lucide-react"
+import { useTransition } from "react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { PlusIcon, WorkflowIcon } from "lucide-react"
 
-import { useWorkflows } from "@/components/workflow-provider"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { generateSlug } from "@/features/workflows/lib/generate-slug"
 import {
   Popover,
   PopoverContent,
@@ -25,185 +16,93 @@ import {
   SidebarGroupAction,
   SidebarGroupContent,
   SidebarGroupLabel,
-  SidebarInput,
   SidebarMenu,
-  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarSeparator,
   useSidebar,
 } from "@/components/ui/sidebar"
+import type { Workflow } from "@/lib/db/schema"
 
-function WorkflowNav() {
+interface WorkflowNavProps {
+  workflows: Workflow[]
+  onCreateWorkflow: (name: string) => Promise<void>
+}
+
+export function WorkflowNav({ workflows, onCreateWorkflow }: WorkflowNavProps) {
   const { state } = useSidebar()
+  const pathname = usePathname()
+  const [isPending, startTransition] = useTransition()
 
-  if (state === "collapsed") {
-    return <WorkflowNavCollapsed />
+  const handleCreateWorkflow = () => {
+    startTransition(async () => {
+      await onCreateWorkflow(generateSlug())
+    })
   }
 
-  return <WorkflowNavExpanded />
-}
-
-function WorkflowNavExpanded() {
-  const { workflows, selectedId, selectWorkflow, createWorkflow } =
-    useWorkflows()
-  const { toggleSidebar } = useSidebar()
-
-  return (
-    <SidebarGroup>
-      <SidebarGroupLabel>Workflows</SidebarGroupLabel>
-      <SidebarGroupAction title="New workflow" onClick={createWorkflow}>
-        <PlusIcon />
-        <span className="sr-only">New workflow</span>
-      </SidebarGroupAction>
-      <SidebarGroupAction
-        title="Collapse sidebar"
-        onClick={toggleSidebar}
-        className="right-10"
+  const workflowItems = workflows.map((workflow) => (
+    <SidebarMenuItem key={workflow.id}>
+      <SidebarMenuButton
+        asChild
+        isActive={pathname === `/workflows/${workflow.id}`}
       >
-        <PanelLeftIcon />
-        <span className="sr-only">Collapse sidebar</span>
-      </SidebarGroupAction>
-      <SidebarGroupContent>
-        <SidebarMenu>
-          {workflows.map((workflow) => (
-            <WorkflowMenuItem
-              key={workflow.id}
-              workflow={workflow}
-              isActive={workflow.id === selectedId}
-              onSelect={() => selectWorkflow(workflow.id)}
-            />
-          ))}
-        </SidebarMenu>
-      </SidebarGroupContent>
-    </SidebarGroup>
-  )
-}
+        <Link href={`/workflows/${workflow.id}`}>
+          <span>{workflow.name}</span>
+        </Link>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  ))
 
-function WorkflowMenuItem({
-  workflow,
-  isActive,
-  onSelect,
-}: {
-  workflow: { id: string; name: string }
-  isActive: boolean
-  onSelect: () => void
-}) {
-  const { renameWorkflow, deleteWorkflow } = useWorkflows()
-  const [isRenaming, setIsRenaming] = React.useState(false)
-
-  if (isRenaming) {
+  if (state === "collapsed") {
     return (
-      <SidebarMenuItem>
-        <SidebarInput
-          autoFocus
-          defaultValue={workflow.name}
-          onFocus={(event) => event.currentTarget.select()}
-          onBlur={(event) => {
-            renameWorkflow(workflow.id, event.currentTarget.value)
-            setIsRenaming(false)
-          }}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              renameWorkflow(workflow.id, event.currentTarget.value)
-              setIsRenaming(false)
-            }
-            if (event.key === "Escape") {
-              setIsRenaming(false)
-            }
-          }}
-        />
-      </SidebarMenuItem>
+      <SidebarGroup>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <SidebarMenuButton tooltip="Workflows">
+                    <WorkflowIcon />
+                    <span>Workflows</span>
+                  </SidebarMenuButton>
+                </PopoverTrigger>
+                <PopoverContent side="right" align="start" className="p-1">
+                  <SidebarMenu>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton
+                        onClick={handleCreateWorkflow}
+                        disabled={isPending}
+                      >
+                        <PlusIcon />
+                        <span>New workflow</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  </SidebarMenu>
+                  <SidebarSeparator className="mx-0" />
+                  <SidebarMenu className="gap-y-0.5">{workflowItems}</SidebarMenu>
+                </PopoverContent>
+              </Popover>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
     )
   }
 
   return (
-    <SidebarMenuItem>
-      <SidebarMenuButton isActive={isActive} onClick={onSelect}>
-        <span>{workflow.name}</span>
-      </SidebarMenuButton>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <SidebarMenuAction showOnHover>
-            <MoreHorizontalIcon />
-            <span className="sr-only">Workflow options</span>
-          </SidebarMenuAction>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent side="right" align="start">
-          <DropdownMenuItem onSelect={() => setIsRenaming(true)}>
-            Rename
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            variant="destructive"
-            onSelect={() => deleteWorkflow(workflow.id)}
-          >
-            Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </SidebarMenuItem>
-  )
-}
-
-function WorkflowNavCollapsed() {
-  const { workflows, selectedId, selectWorkflow, createWorkflow } =
-    useWorkflows()
-  const { toggleSidebar } = useSidebar()
-
-  return (
     <SidebarGroup>
+      <SidebarGroupLabel>Workflows</SidebarGroupLabel>
+      <SidebarGroupAction
+        title="New workflow"
+        onClick={handleCreateWorkflow}
+        disabled={isPending}
+      >
+        <PlusIcon />
+        <span className="sr-only">New workflow</span>
+      </SidebarGroupAction>
       <SidebarGroupContent>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              title="Expand sidebar"
-              onClick={toggleSidebar}
-            >
-              <PanelLeftIcon />
-              <span>Expand sidebar</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <Popover>
-              <PopoverTrigger asChild>
-                <SidebarMenuButton>
-                  <WorkflowIcon />
-                  <span>Workflows</span>
-                </SidebarMenuButton>
-              </PopoverTrigger>
-              <PopoverContent side="right" align="start" className="w-56 p-1">
-                <SidebarMenu>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton onClick={createWorkflow}>
-                      <PlusIcon />
-                      <span>New workflow</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </SidebarMenu>
-                {workflows.length > 0 && (
-                  <>
-                    <SidebarSeparator className="mx-1 my-1" />
-                    <SidebarMenu className="max-h-72 overflow-y-auto">
-                      {workflows.map((workflow) => (
-                        <SidebarMenuItem key={workflow.id}>
-                          <SidebarMenuButton
-                            isActive={workflow.id === selectedId}
-                            onClick={() => selectWorkflow(workflow.id)}
-                          >
-                            <span>{workflow.name}</span>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      ))}
-                    </SidebarMenu>
-                  </>
-                )}
-              </PopoverContent>
-            </Popover>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        <SidebarMenu className="gap-y-0.5">{workflowItems}</SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>
   )
 }
-
-export { WorkflowNav }
