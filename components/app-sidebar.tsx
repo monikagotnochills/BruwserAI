@@ -10,7 +10,6 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-  SidebarRail,
 } from "@/components/ui/sidebar"
 
 async function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -19,7 +18,7 @@ async function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   return (
     <Sidebar variant="inset" collapsible="icon" {...props}>
-      <SidebarHeader>
+      <SidebarHeader className="w-full">
         <OrganizationSwitcher />
       </SidebarHeader>
       <SidebarContent>
@@ -28,10 +27,9 @@ async function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           onCreateWorkflow={createWorkflowAction}
         />
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter className="mt-auto">
         <UserButton />
       </SidebarFooter>
-      <SidebarRail />
     </Sidebar>
   )
 }

@@ -46,6 +46,10 @@ Escape apostrophes and quotes in JSX text content — raw `'` and `"` trip the
 `&quot;` for quotes (e.g. `you&apos;re`, `doesn&apos;t`). This applies only to
 literal text between JSX tags, not to string attribute values or JS strings.
 
+New rule for this repo: never leave a raw apostrophe in JSX literal text. Rewrite
+as plain text or use escaped entities instead of writing a literal `'` directly in
+a TSX element body. This includes route-level pages and not-found/error empty states.
+
 # Database types
 
 Derive database types from the Drizzle schema — never hand-write custom or partial
